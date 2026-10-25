@@ -1,0 +1,48 @@
+name: Build firmware
+
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: ghcr.io/qmk/qmk_cli
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Conundrum only needs these; the rest of QMK's submodules are large
+      - name: Check out submodules
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init lib/printf modules/getreuer modules/wheredoesyourmindgo
+
+      - name: Build
+        run: |
+          make thock/conundrum:serenity
+          make thock/conundrum:default
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: '*.uf2'
+
+  publish:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware
+
+      - name: Replace the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest *.uf2 --target "$GITHUB_SHA" --title "Latest firmware" \
+            --notes "Built from $GITHUB_SHA. Copy a .uf2 file to the Conundrum's bootloader drive."
