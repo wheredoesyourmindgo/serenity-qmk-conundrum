@@ -1,0 +1,45 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en",
+  "useGitignore": true,
+  "files": [
+    "README.md",
+    "scripts/**",
+    "keyboards/thock/**",
+    "users/serenity/**",
+    "platforms/arm_atsam/bootloaders/uf2boot.c",
+    ".github/workflows/build.yml"
+  ],
+  "ignorePaths": [
+    "modules/getreuer/**",
+    "lib/**",
+    "docs/**",
+    "LICENSE",
+    "license_*.md",
+    ".clangd",
+    "SERENITY_QMK_COMMIT"
+  ],
+  "ignoreRegExpList": [
+    "/-D[A-Z][A-Z0-9_]*/g",
+    "/\\\\[nt]/g"
+  ],
+  "languageSettings": [
+    {
+      "languageId": "c,cpp,makefile",
+      "ignoreRegExpList": [
+        "/\\b[A-Z][A-Z0-9_]*\\b/g"
+      ]
+    }
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "project-words",
+      "path": "./project-words.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": [
+    "project-words"
+  ]
+}

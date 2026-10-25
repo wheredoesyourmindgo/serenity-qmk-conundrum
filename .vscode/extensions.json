@@ -1,10 +1,15 @@
 // Suggested extensions
 {
-  "recommendations": [
-    "EditorConfig.EditorConfig",
-    "xaver.clang-format",
-    "llvm-vs-code-extensions.vscode-clangd",
-    "bierner.github-markdown-preview",
-    "donjayamanne.git-extension-pack"
-  ]
+    "recommendations": [
+        "amodio.toggle-excluded-files",
+        "EditorConfig.EditorConfig",
+        "xaver.clang-format",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "bierner.github-markdown-preview",
+        "donjayamanne.git-extension-pack",
+        "streetsidesoftware.code-spell-checker"
+    ],
+    "unwantedRecommendations": [
+        "ms-vscode.cpptools"
+    ]
 }
