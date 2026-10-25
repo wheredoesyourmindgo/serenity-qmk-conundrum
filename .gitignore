@@ -19,6 +19,7 @@
 *.map
 *.o
 *.a
+!lib/ec_touch/lib/*.a
 *.so
 *.dylib
 *.dll

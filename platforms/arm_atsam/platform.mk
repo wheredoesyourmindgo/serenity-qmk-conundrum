@@ -21,7 +21,10 @@ COMPILEFLAGS += -ffunction-sections
 COMPILEFLAGS += -fshort-enums
 COMPILEFLAGS += -fno-inline-small-functions
 COMPILEFLAGS += -fno-strict-aliasing
-COMPILEFLAGS += -mfloat-abi=hard
+# Keyboards linking prebuilt soft-float libraries (e.g. thock/conundrum's
+# ec_touch) set ARM_ATSAM_FLOAT_ABI = softfp in rules.mk
+ARM_ATSAM_FLOAT_ABI ?= hard
+COMPILEFLAGS += -mfloat-abi=$(ARM_ATSAM_FLOAT_ABI)
 COMPILEFLAGS += -mfpu=fpv4-sp-d16
 COMPILEFLAGS += -mthumb
 COMPILEFLAGS += -fno-builtin-printf

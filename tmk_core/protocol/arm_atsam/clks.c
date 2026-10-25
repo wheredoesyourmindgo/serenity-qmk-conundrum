@@ -30,15 +30,40 @@ const uint8_t  sercom_pchan[]   = {7, 8, 23, 24, 34, 35};
 #define USE_DPLL_IND 0
 #define USE_DPLL_DEF GCLK_SOURCE_DPLL0
 
+// Source for the generic clocks derived from the main clock
+#ifdef ARM_ATSAM_DFLL_ONLY
+#    define USE_GCLK_SRC GCLK_SOURCE_DFLL48M
+#    define USE_GCLK_FREQ system_clks.freq_dfll
+#else
+#    define USE_GCLK_SRC USE_DPLL_DEF
+#    define USE_GCLK_FREQ system_clks.freq_dpll[0]
+#endif
+
 void CLK_oscctrl_init(void) {
-    Oscctrl *posctrl = OSCCTRL;
-    Gclk *   pgclk   = GCLK;
+    Gclk *pgclk = GCLK;
 
     DBGC(DC_CLK_OSC_INIT_BEGIN);
 
     // default setup on por
     system_clks.freq_dfll    = FREQ_DFLL_DEFAULT;
     system_clks.freq_gclk[0] = system_clks.freq_dfll;
+
+#ifdef ARM_ATSAM_DFLL_ONLY
+    // change gclk0 to DFLL (already locked to USB SOF by the bootloader)
+    pgclk->GENCTRL[GEN_DPLL0].bit.SRC = GCLK_SOURCE_DFLL48M;
+    while (pgclk->SYNCBUSY.bit.GENCTRL0) {
+        DBGC(DC_CLK_OSC_INIT_GCLK_SYNC_GENCTRL0);
+    }
+
+    // gclk3 from DFLL clocks USB
+    pgclk->GENCTRL[GCLK_PCHCTRL_GEN_GCLK3_Val].reg = GCLK_GENCTRL_SRC(GCLK_GENCTRL_SRC_DFLL_Val) | GCLK_GENCTRL_GENEN | GCLK_GENCTRL_OE;
+    while (pgclk->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(GCLK_PCHCTRL_GEN_GCLK3_Val)) {
+    }
+    pgclk->GENCTRL[GCLK_PCHCTRL_GEN_GCLK0_Val].reg = GCLK_GENCTRL_SRC(GCLK_GENCTRL_SRC_DFLL_Val) | GCLK_GENCTRL_GENEN | GCLK_GENCTRL_OE;
+    while (pgclk->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(GCLK_PCHCTRL_GEN_GCLK0_Val)) {
+    }
+#else
+    Oscctrl *posctrl = OSCCTRL;
 
     // configure and startup 16MHz xosc0
     posctrl->XOSCCTRL[0].bit.ENABLE   = 0;
@@ -85,6 +110,7 @@ void CLK_oscctrl_init(void) {
     }
 
     system_clks.freq_gclk[0] = system_clks.freq_dpll[0];
+#endif // ARM_ATSAM_DFLL_ONLY
 
     usec_delay_mult = system_clks.freq_gclk[0] / (USEC_DELAY_LOOP_CYCLES * 1000000);
     if (usec_delay_mult < 1) usec_delay_mult = 1; // Never allow a multiplier of zero
@@ -102,11 +128,11 @@ uint32_t CLK_set_gclk_freq(uint8_t gclkn, uint32_t freq) {
     while (pgclk->SYNCBUSY.vec.GENCTRL) {
         DBGC(DC_CLK_SET_GCLK_FREQ_SYNC_1);
     }
-    pgclk->GENCTRL[gclkn].bit.SRC = USE_DPLL_DEF;
+    pgclk->GENCTRL[gclkn].bit.SRC = USE_GCLK_SRC;
     while (pgclk->SYNCBUSY.vec.GENCTRL) {
         DBGC(DC_CLK_SET_GCLK_FREQ_SYNC_2);
     }
-    pgclk->GENCTRL[gclkn].bit.DIV = (uint8_t)(system_clks.freq_dpll[0] / freq);
+    pgclk->GENCTRL[gclkn].bit.DIV = (uint8_t)(USE_GCLK_FREQ / freq);
     while (pgclk->SYNCBUSY.vec.GENCTRL) {
         DBGC(DC_CLK_SET_GCLK_FREQ_SYNC_3);
     }
@@ -118,7 +144,7 @@ uint32_t CLK_set_gclk_freq(uint8_t gclkn, uint32_t freq) {
     while (pgclk->SYNCBUSY.vec.GENCTRL) {
         DBGC(DC_CLK_SET_GCLK_FREQ_SYNC_5);
     }
-    system_clks.freq_gclk[gclkn] = system_clks.freq_dpll[0] / pgclk->GENCTRL[gclkn].bit.DIV;
+    system_clks.freq_gclk[gclkn] = USE_GCLK_FREQ / pgclk->GENCTRL[gclkn].bit.DIV;
 
     DBGC(DC_CLK_SET_GCLK_FREQ_COMPLETE);
 
@@ -134,11 +160,20 @@ void CLK_init_osc(void) {
     while (pgclk->SYNCBUSY.vec.GENCTRL) {
         DBGC(DC_CLK_INIT_OSC_SYNC_1);
     }
+#ifdef ARM_ATSAM_DFLL_ONLY
+    // no xosc0: 48MHz DFLL / 3 stands in for the 16MHz crystal
+    pgclk->GENCTRL[gclkn].bit.SRC = GCLK_SOURCE_DFLL48M;
+    while (pgclk->SYNCBUSY.vec.GENCTRL) {
+        DBGC(DC_CLK_INIT_OSC_SYNC_2);
+    }
+    pgclk->GENCTRL[gclkn].bit.DIV = 3;
+#else
     pgclk->GENCTRL[gclkn].bit.SRC = GCLK_SOURCE_XOSC0;
     while (pgclk->SYNCBUSY.vec.GENCTRL) {
         DBGC(DC_CLK_INIT_OSC_SYNC_2);
     }
     pgclk->GENCTRL[gclkn].bit.DIV = 1;
+#endif
     while (pgclk->SYNCBUSY.vec.GENCTRL) {
         DBGC(DC_CLK_INIT_OSC_SYNC_3);
     }
@@ -150,13 +185,17 @@ void CLK_init_osc(void) {
     while (pgclk->SYNCBUSY.vec.GENCTRL) {
         DBGC(DC_CLK_INIT_OSC_SYNC_5);
     }
+#ifdef ARM_ATSAM_DFLL_ONLY
+    system_clks.freq_gclk[gclkn] = system_clks.freq_dfll / 3;
+#else
     system_clks.freq_gclk[gclkn] = system_clks.freq_xosc0;
+#endif
 
     DBGC(DC_CLK_INIT_OSC_COMPLETE);
 }
 
 void CLK_reset_time(void) {
-    Tc *ptc4 = TC4;
+    Tc *ptc4 = TC_MS;
     Tc *ptc0 = TC0;
 
     ms_clk = 0;
@@ -188,9 +227,9 @@ void CLK_reset_time(void) {
     DBGC(DC_CLK_RESET_TIME_COMPLETE);
 }
 
-void TC4_Handler() {
-    if (TC4->COUNT16.INTFLAG.bit.MC0) {
-        TC4->COUNT16.INTFLAG.reg = TC_INTENCLR_MC0;
+void TC_MS_Handler(void) {
+    if (TC_MS->COUNT16.INTFLAG.bit.MC0) {
+        TC_MS->COUNT16.INTFLAG.reg = TC_INTENCLR_MC0;
         ms_clk++;
     }
 }
@@ -198,7 +237,7 @@ void TC4_Handler() {
 uint32_t CLK_enable_timebase(void) {
     Gclk * pgclk  = GCLK;
     Mclk * pmclk  = MCLK;
-    Tc *   ptc4   = TC4;
+    Tc *   ptc4   = TC_MS;
     Tc *   ptc0   = TC0;
     Evsys *pevsys = EVSYS;
 
@@ -208,12 +247,12 @@ uint32_t CLK_enable_timebase(void) {
     CLK_set_gclk_freq(GEN_TC45, FREQ_TC45_DEFAULT);
     CLK_init_osc();
 
-    // unmask TC4, sourcegclk2 to TC4
-    pmclk->APBCMASK.bit.TC4_             = 1;
-    pgclk->PCHCTRL[TC4_GCLK_ID].bit.GEN  = GEN_TC45;
-    pgclk->PCHCTRL[TC4_GCLK_ID].bit.CHEN = 1;
+    // unmask TC4 (TC2 on SAMD51G), sourcegclk2 to it
+    TC_MS_APB_ENABLE();
+    pgclk->PCHCTRL[TC_MS_GCLK_ID].bit.GEN  = GEN_TC45;
+    pgclk->PCHCTRL[TC_MS_GCLK_ID].bit.CHEN = 1;
 
-    // configure TC4
+    // configure TC4 (TC2 on SAMD51G)
     DBGC(DC_CLK_ENABLE_TIMEBASE_TC4_BEGIN);
     ptc4->COUNT16.CTRLA.bit.ENABLE = 0;
     while (ptc4->COUNT16.SYNCBUSY.bit.ENABLE) {
@@ -244,7 +283,7 @@ uint32_t CLK_enable_timebase(void) {
     // generate event for next stage
     ptc4->COUNT16.EVCTRL.bit.MCEO0 = 1;
 
-    NVIC_EnableIRQ(TC4_IRQn);
+    NVIC_EnableIRQ(TC_MS_IRQn);
     ptc4->COUNT16.INTENSET.bit.MC0 = 1;
 
     DBGC(DC_CLK_ENABLE_TIMEBASE_TC4_COMPLETE);
@@ -287,7 +326,7 @@ uint32_t CLK_enable_timebase(void) {
     pevsys->USER[44].reg                     = EVSYS_ID_USER_PORT_EV_0;              // TC0 will get event channel 0
     pevsys->Channel[0].CHANNEL.bit.EDGSEL    = EVSYS_CHANNEL_EDGSEL_RISING_EDGE_Val; // Rising edge
     pevsys->Channel[0].CHANNEL.bit.PATH      = EVSYS_CHANNEL_PATH_SYNCHRONOUS_Val;   // Synchronous
-    pevsys->Channel[0].CHANNEL.bit.EVGEN     = EVSYS_ID_GEN_TC4_MCX_0;               // TC4 MC0
+    pevsys->Channel[0].CHANNEL.bit.EVGEN     = TC_MS_EVGEN;                          // TC4 (TC2 on SAMD51G) MC0
 
     DBGC(DC_CLK_ENABLE_TIMEBASE_EVSYS_COMPLETE);
 
@@ -424,6 +463,19 @@ uint32_t CLK_set_i2c1_freq(uint8_t sercomn, uint32_t freq) {
     return system_clks.freq_i2c1;
 }
 
+// The PTC (capacitive touch) measures through ADC0, so it takes over ADC0's
+// clock: 8MHz on gclk5
+uint32_t CLK_init_PTC(void) {
+    CLK_set_gclk_freq(GEN_PTC, 8000000);
+
+    MCLK->AHBMASK.reg |= 1u << 7;
+    GCLK->PCHCTRL[ADC0_GCLK_ID].reg = GCLK_PCHCTRL_GEN(GEN_PTC) | GCLK_PCHCTRL_CHEN;
+    while (GCLK->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(GEN_PTC)) {
+    }
+
+    return 0;
+}
+
 void CLK_init(void) {
     DBGC(DC_CLK_INIT_BEGIN);
 
@@ -431,6 +483,9 @@ void CLK_init(void) {
 
     CLK_oscctrl_init();
     CLK_enable_timebase();
+#ifdef ARM_ATSAM_PTC_ENABLE
+    CLK_init_PTC();
+#endif
 
     DBGC(DC_CLK_INIT_COMPLETE);
 }

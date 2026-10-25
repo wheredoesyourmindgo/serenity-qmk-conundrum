@@ -21,7 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MD_BOOTLOADER
 
 // From keyboard
-#    include "config_led.h"
+#    ifdef RGB_MATRIX_ENABLE
+#        include "config_led.h"
+#    endif
 #    include "config.h"
 
 #endif // MD_BOOTLOADER
@@ -53,6 +55,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define GEN_DPLL0 0
 #define GEN_OSC0 1
 #define GEN_TC45 2
+#define GEN_PTC 5
+
+// Boards without a crystal (thock/conundrum) build with ARM_ATSAM_DFLL_ONLY:
+// the CPU runs from the 48MHz DFLL the UF2 bootloader set up for USB.
+// Boards using the PTC for capacitive sensing build with ARM_ATSAM_PTC_ENABLE.
+
+// The SAMD51G has no TC4, so its 1ms timebase runs on TC2
+#ifdef __SAMD51G18A__
+#    define TC_MS TC2
+#    define TC_MS_GCLK_ID TC2_GCLK_ID
+#    define TC_MS_IRQn TC2_IRQn
+#    define TC_MS_Handler TC2_Handler
+#    define TC_MS_EVGEN EVSYS_ID_GEN_TC2_MCX_0
+#    define TC_MS_APB_ENABLE() (MCLK->APBBMASK.bit.TC2_ = 1)
+#else
+#    define TC_MS TC4
+#    define TC_MS_GCLK_ID TC4_GCLK_ID
+#    define TC_MS_IRQn TC4_IRQn
+#    define TC_MS_Handler TC4_Handler
+#    define TC_MS_EVGEN EVSYS_ID_GEN_TC4_MCX_0
+#    define TC_MS_APB_ENABLE() (MCLK->APBCMASK.bit.TC4_ = 1)
+#endif
 
 #define SERCOM_COUNT 5
 #define GCLK_COUNT 12
@@ -77,6 +101,7 @@ void     CLK_oscctrl_init(void);
 void     CLK_reset_time(void);
 uint32_t CLK_set_gclk_freq(uint8_t gclkn, uint32_t freq);
 uint32_t CLK_enable_timebase(void);
+uint32_t CLK_init_PTC(void);
 uint64_t timer_read64(void);
 void     CLK_delay_us(uint32_t usec);
 void     CLK_delay_ms(uint64_t msec);

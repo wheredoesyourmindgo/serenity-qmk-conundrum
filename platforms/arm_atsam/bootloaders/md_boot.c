@@ -16,7 +16,7 @@
 
 #include "bootloader.h"
 
-#include "samd51j18a.h"
+#include "samd51.h"
 
 // WARNING: These are only for CTRL bootloader release "v2.18Jun 22 2018 17:28:08" for bootloader_jump support
 extern uint32_t _eram;

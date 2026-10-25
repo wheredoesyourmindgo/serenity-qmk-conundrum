@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef _ARM_ATSAM_PROTOCOL_H_
 #define _ARM_ATSAM_PROTOCOL_H_
 
-#include "samd51j18a.h"
+#include "samd51.h"
 
 #include "timer.h"
 #include "d51_util.h"
@@ -26,9 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wait.h"
 #include "adc.h"
 #include "i2c_master.h"
-#include "shift_register.h"
+#ifndef NO_SR_EXP
+#    include "shift_register.h"
+#endif
 
-#include "./usb/usb_hub.h"
+#ifndef NO_USB2422
+#    include "./usb/usb_hub.h"
+#endif
 
 #ifndef MD_BOOTLOADER
 

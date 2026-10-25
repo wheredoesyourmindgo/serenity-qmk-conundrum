@@ -21,6 +21,7 @@
 #
 # Current options for ARM (ATSAM):
 #     md-boot      Atmel SAM-BA (only used by Drop boards)
+#     uf2boot      Adafruit UF2 bootloader (uf2-samdx1, used by Thock boards)
 #
 # If you need to provide your own implementation, you can set inside `rules.mk`
 # `BOOTLOADER = custom` -- you'll need to provide your own implementations. See
@@ -37,6 +38,11 @@ endif
 ifeq ($(strip $(BOOTLOADER)), md-boot)
     OPT_DEFS += -DBOOTLOADER_MD_BOOT
     BOOTLOADER_TYPE = md_boot
+endif
+
+ifeq ($(strip $(BOOTLOADER)), uf2boot)
+    OPT_DEFS += -DBOOTLOADER_UF2BOOT
+    BOOTLOADER_TYPE = uf2boot
 endif
 
 ifeq ($(strip $(BOOTLOADER_TYPE)),)

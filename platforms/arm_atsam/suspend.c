@@ -1,6 +1,8 @@
 #include "matrix.h"
 #include "i2c_master.h"
-#include "md_rgb_matrix.h"
+#ifdef RGB_MATRIX_ENABLE
+#    include "md_rgb_matrix.h"
+#endif
 #include "suspend.h"
 
 /** \brief Suspend power down

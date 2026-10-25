@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "samd51j18a.h"
+#include "samd51.h"
 
 #define A00 PIN_PA00
 #define A01 PIN_PA01

@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "samd51j18a.h"
+#include "samd51.h"
 #include "keyboard.h"
 
 #include "report.h"
@@ -28,8 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // From protocol directory
 #include "arm_atsam_protocol.h"
 
+#ifdef RGB_MATRIX_ENABLE
 // From keyboard's directory
-#include "config_led.h"
+#    include "config_led.h"
+#endif
 
 uint8_t g_usb_state = USB_FSMSTATUS_FSMSTATE_OFF_Val; // Saved USB state from hardware value to detect changes
 
@@ -239,6 +241,9 @@ void main_subtask_usb_state(void) {
     }
 }
 
+// The 5V reading only feeds LED current limiting, and ADC0 may belong to
+// the keyboard (thock/conundrum senses keys with the PTC, which uses ADC0)
+#ifdef RGB_MATRIX_ENABLE
 void main_subtask_power_check(void) {
     static uint64_t next_5v_checkup = 0;
 
@@ -248,12 +253,12 @@ void main_subtask_power_check(void) {
         v_5v     = adc_get(ADC_5V);
         v_5v_avg = 0.9 * v_5v_avg + 0.1 * v_5v;
 
-#ifdef RGB_MATRIX_ENABLE
         gcr_compute();
-#endif
     }
 }
+#endif // RGB_MATRIX_ENABLE
 
+#ifndef NO_USB2422
 void main_subtask_usb_extra_device(void) {
     static uint64_t next_usb_checkup = 0;
 
@@ -263,6 +268,7 @@ void main_subtask_usb_extra_device(void) {
         USB_HandleExtraDevice();
     }
 }
+#endif // NO_USB2422
 
 #ifdef RAW_ENABLE
 void main_subtask_raw(void) {
@@ -272,8 +278,12 @@ void main_subtask_raw(void) {
 
 void main_subtasks(void) {
     main_subtask_usb_state();
+#ifdef RGB_MATRIX_ENABLE
     main_subtask_power_check();
+#endif
+#ifndef NO_USB2422
     main_subtask_usb_extra_device();
+#endif
 #ifdef CONSOLE_ENABLE
     main_subtask_console_flush();
 #endif
@@ -297,13 +307,17 @@ int main(void) {
 
     ADC0_init();
 
+#ifndef NO_SR_EXP
     SR_EXP_Init();
+#endif
 
 #ifdef RGB_MATRIX_ENABLE
     i2c1_init();
 #endif // RGB_MATRIX_ENABLE
 
+#ifndef NO_USB2422
     USB_Hub_init();
+#endif
 
     DBGC(DC_MAIN_UDC_START_BEGIN);
     udc_start();
@@ -313,8 +327,10 @@ int main(void) {
     CDC_init();
     DBGC(DC_MAIN_CDC_INIT_COMPLETE);
 
+#ifndef NO_USB2422
     while (USB_Hub_Port_Detect_Init() == 0) {
     }
+#endif
 
     DBG_LED_OFF;
 
@@ -342,7 +358,9 @@ int main(void) {
     uint64_t next_print = 0;
 #endif // CONSOLE_ENABLE
 
+#ifdef RGB_MATRIX_ENABLE
     v_5v_avg = adc_get(ADC_5V);
+#endif
 
     debug_code_disable();
 

@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef _D51_UTIL_H_
 #define _D51_UTIL_H_
 
-#include "samd51j18a.h"
+#include "samd51.h"
 
 /* Debug LED */
 #if DEBUG_LED_ENABLE == 1

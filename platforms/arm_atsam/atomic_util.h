@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "samd51j18a.h"
+#include "samd51.h"
 
 static __inline__ uint8_t __interrupt_disable__(void) {
     __disable_irq();

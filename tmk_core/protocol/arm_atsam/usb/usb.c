@@ -52,8 +52,8 @@
 #endif
 
 #include "compiler.h"
-#undef LITTLE_ENDIAN // redefined in samd51j18a.h
-#include "samd51j18a.h"
+#undef LITTLE_ENDIAN // redefined in samd51.h
+#include "samd51.h"
 #include <stdbool.h>
 #include <string.h>
 #include "arm_math.h"
@@ -968,7 +968,9 @@ enum status_code usb_init(struct usb_module *module_inst, Usb *const hw, struct 
     Gclk *   pgclk = GCLK;
     Mclk *   pmclk = MCLK;
     Port *   pport = PORT;
-    Oscctrl *posc  = OSCCTRL;
+#ifndef ARM_ATSAM_DFLL_ONLY
+    Oscctrl *posc = OSCCTRL;
+#endif
 
     _usb_instances = module_inst;
 
@@ -983,6 +985,14 @@ enum status_code usb_init(struct usb_module *module_inst, Usb *const hw, struct 
     pport->Group[0].PMUX[12].reg          = 0x77; // PA24, PA25, function column H for USB D-, D+
     pport->Group[0].PINCFG[24].bit.PMUXEN = 1;
     pport->Group[0].PINCFG[25].bit.PMUXEN = 1;
+
+#ifdef ARM_ATSAM_DFLL_ONLY
+    // The CPU already runs from the DFLL, which the bootloader left in USB
+    // clock recovery mode, so it must not be stopped and reconfigured here
+    pgclk->PCHCTRL[USB_GCLK_ID].reg = GCLK_PCHCTRL_GEN(GCLK_PCHCTRL_GEN_GCLK3_Val) | GCLK_PCHCTRL_CHEN;
+    while (pgclk->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(GCLK_PCHCTRL_GEN_GCLK3_Val)) {
+    }
+#else
     pport->Group[1].PMUX[11].bit.PMUXE    = 7; // PB22, function column H for USB SOF_1KHz output
     pport->Group[1].PINCFG[22].bit.PMUXEN = 1;
 
@@ -1012,6 +1022,7 @@ enum status_code usb_init(struct usb_module *module_inst, Usb *const hw, struct 
     /* Setup clock for module */
     pgclk->PCHCTRL[GCLK_USB].bit.GEN  = 0;
     pgclk->PCHCTRL[GCLK_USB].bit.CHEN = 1;
+#endif // ARM_ATSAM_DFLL_ONLY
 
     /* Reset */
     hw->DEVICE.CTRLA.bit.SWRST = 1;

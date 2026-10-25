@@ -16,7 +16,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "samd51j18a.h"
+#include "samd51.h"
 
 #include "pin_defs.h"
 

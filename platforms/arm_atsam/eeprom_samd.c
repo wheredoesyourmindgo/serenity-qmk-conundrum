@@ -16,7 +16,7 @@
 #include "eeprom.h"
 #include "debug.h"
 #include "util.h"
-#include "samd51j18a.h"
+#include "samd51.h"
 #include "core_cm4.h"
 #include "component/nvmctrl.h"
 #include "eeprom_samd.h"
