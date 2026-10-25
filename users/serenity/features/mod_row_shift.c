@@ -34,7 +34,8 @@ static void remove_shift(bottom_row_side_t *side) {
 static bool process_layer_key(bottom_row_side_t *side, keyrecord_t *record) {
     if (record->event.pressed) {
         side->layer_held = true;
-        if (get_mods() & side->mods) { // Modifier first
+        // A locked layer's key unlocks it (Layer Lock), so let it through
+        if ((get_mods() & side->mods) && !is_layer_locked(side->layer)) { // Modifier first
             add_shift(side);
             return false;
         }
@@ -51,7 +52,8 @@ static bool process_layer_key(bottom_row_side_t *side, keyrecord_t *record) {
 static void process_mod_key(bottom_row_side_t *side, uint8_t mod, keyrecord_t *record) {
     if (record->event.pressed) {
         // Layer key first. Only on the layer itself, so e.g. Function (Action + Hardware) keeps its mods.
-        if (side->layer_held && !side->shift_held && get_highest_layer(layer_state) == side->layer) {
+        // A locked layer stays on, so its modifiers are plain modifiers.
+        if (side->layer_held && !side->shift_held && get_highest_layer(layer_state) == side->layer && !is_layer_locked(side->layer)) {
             layer_off(side->layer);
             add_shift(side);
         }

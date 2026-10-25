@@ -39,15 +39,16 @@ bool caps_word_press_user(uint16_t keycode) {
     }
 }
 
-// Escape first cancels one-shot mods, then a locked layer. Returns true if it cancelled something.
+// Escape first cancels one-shot mods, then any locked layers. Returns true if it cancelled something.
 static bool escape_cancels_something(void) {
     if (stackable_oneshot_cancel()) {
         return true;
     }
-    const uint8_t layer = get_highest_layer(layer_state);
-    if (is_layer_locked(layer)) {
-        layer_lock_off(layer);
-        return true;
+    for (uint8_t layer = 0; layer < MAX_LAYER; layer++) {
+        if (is_layer_locked(layer)) {
+            layer_lock_all_off();
+            return true;
+        }
     }
     return false;
 }
@@ -140,16 +141,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 
     // Feature order matters: each one can consume the key and stop the rest.
+#ifdef MOD_ROW_SHIFT_ENABLE
+    // Before Layer Lock, which swallows a locked layer's key release: Mod Row Shift must see it
+    // or it thinks the key is still held. It never consumes a locked layer's key.
+    if (!process_mod_row_shift(keycode, record)) {
+        return false;
+    }
+#endif
     // QMK also runs Layer Lock after this function, but by then the features below may have
     // consumed layer keys (MO/LT). Run it here first so those keys still unlock a locked layer.
     if (!process_layer_lock(keycode, record)) {
         return false;
     }
-#ifdef MOD_ROW_SHIFT_ENABLE
-    if (!process_mod_row_shift(keycode, record)) {
-        return false;
-    }
-#endif
     if (!process_cmd_tab_switcher(keycode, record)) {
         return false;
     }

@@ -16,7 +16,10 @@
  * - Layer key first: pressing a modifier turns the layer off and adds Shift. Releasing the
  *   last modifier removes Shift and turns the layer back on if its key is still held.
  *
- * Call from `process_record_user` and return its result:
+ * A locked layer (Layer Lock) is left alone: its key unlocks it and its modifiers are plain.
+ *
+ * Call from `process_record_user`, before Layer Lock so it sees every layer key release, and
+ * return its result:
  *   if (!process_mod_row_shift(keycode, record)) { return false; }
  */
 
