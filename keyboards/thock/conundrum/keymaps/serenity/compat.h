@@ -47,6 +47,10 @@ enum community_module_keycodes {
 
 #define QK_LLCK QK_LAYER_LOCK
 
+// QMK 0.28's quantum.h declares core Layer Lock's functions (is_layer_locked(), ...) for every
+// file; getreuer/layer_lock provides the same ones
+#include "layer_lock.h"
+
 // Module hooks
 bool process_record_custom_shift_keys(uint16_t keycode, keyrecord_t *record);
 bool process_record_stackable_oneshot(uint16_t keycode, keyrecord_t *record);
