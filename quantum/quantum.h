@@ -273,3 +273,9 @@ void tap_code16_delay(uint16_t code, uint16_t delay);
 const char *get_numeric_str(char *buf, size_t buf_len, uint32_t curr_num, char curr_pad);
 const char *get_u8_str(uint8_t curr_num, char curr_pad);
 const char *get_u16_str(uint16_t curr_num, char curr_pad);
+
+// A keymap written for newer QMK can point this at a header that fills in what 0.26 lacks, such
+// as the declarations QMK 0.28 generates for community modules
+#ifdef QMK_COMPAT_H
+#    include QMK_COMPAT_H
+#endif
