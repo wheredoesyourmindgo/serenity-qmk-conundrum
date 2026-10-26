@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "samd51.h"
 #include "matrix.h"
 #include "ec_touch.h"
 
@@ -25,9 +26,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Filled in by the ec_touch library as the PTC finishes each measurement
 static uint16_t touch_signals[MATRIX_ROWS * MATRIX_COLS];
 
+// The ec_touch library's PTC settings (QTouch qtm_acq_node_group_config_t); byte 5 is the PTC
+// interrupt's priority, which the library applies each time it starts a measurement
+extern uint8_t ptc_qtlib_acq_gen1[];
+#define PTC_INTERRUPT_PRIORITY 5
+
 void matrix_init_custom(void) {
     ec_touch_init(touch_signals);
     ec_touch_start();
+
+    // The PTC interrupt starts each key's conversion, then waits for the ADC to report it busy.
+    // The library runs it at priority 2, so USB and the timer (priority 0) could interrupt that
+    // wait; when the conversion finished before the wait resumed, busy never showed and the
+    // keyboard froze. Put every other interrupt below it. (Raising the PTC to priority 0 in the
+    // library's settings instead stops its measurements from ever starting.)
+    uint8_t ptc_priority = ptc_qtlib_acq_gen1[PTC_INTERRUPT_PRIORITY];
+    for (int irq = 0; irq < PERIPH_COUNT_IRQn; irq++) {
+        if (irq != ADC0_1_IRQn && NVIC_GetPriority(irq) <= ptc_priority) {
+            NVIC_SetPriority(irq, ptc_priority + 1);
+        }
+    }
 }
 
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
