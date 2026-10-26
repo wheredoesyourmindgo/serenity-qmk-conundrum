@@ -17,6 +17,7 @@ else
   OPT_DEFS += -DNO_SR_EXP
 endif
 SRC += $(ARM_ATSAM_DIR)/startup.c
+SRC += $(ARM_ATSAM_DIR)/watchdog.c
 
 SRC += $(ARM_ATSAM_DIR)/usb/main_usb.c
 SRC += $(ARM_ATSAM_DIR)/usb/udc.c

@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // From protocol directory
 #include "arm_atsam_protocol.h"
+#include "watchdog.h"
 
 #ifdef RGB_MATRIX_ENABLE
 // From keyboard's directory
@@ -62,9 +63,11 @@ uint8_t keyboard_leds(void) {
 void send_keyboard(report_keyboard_t *report) {
     uint32_t irqflags;
 
+    BREADCRUMB(BC_SEND_KEYBOARD_WAIT);
     while (udi_hid_kbd_b_report_trans_ongoing) {
         main_subtasks();
     } // Run other tasks while waiting for USB to be free
+    BREADCRUMB(BC_KEYBOARD_TASK);
 
     irqflags = __get_PRIMASK();
     __disable_irq();
@@ -82,9 +85,11 @@ void send_nkro(report_nkro_t *report) {
 #ifdef NKRO_ENABLE
     uint32_t irqflags;
 
+    BREADCRUMB(BC_SEND_NKRO_WAIT);
     while (udi_hid_nkro_b_report_trans_ongoing) {
         main_subtasks();
     } // Run other tasks while waiting for USB to be free
+    BREADCRUMB(BC_KEYBOARD_TASK);
 
     irqflags = __get_PRIMASK();
     __disable_irq();
@@ -162,6 +167,7 @@ int8_t sendchar(uint8_t c) {
 }
 
 void main_subtask_console_flush(void) {
+    uint32_t caller = breadcrumb_swap(BC_CONSOLE_WAIT);
     while (udi_hid_con_b_report_trans_ongoing) {
     } // Wait for any previous transfers to complete
 
@@ -196,6 +202,7 @@ void main_subtask_console_flush(void) {
     }
 
     console_printbuf_len = 0;
+    BREADCRUMB(caller);
 }
 
 #endif // CONSOLE_ENABLE
@@ -301,6 +308,10 @@ int main(void) {
     DBG_3_ENA;
     DBG_3_OFF;
 
+#ifdef ARM_ATSAM_BREADCRUMBS
+    breadcrumbs_boot();
+#endif
+
     debug_code_init();
 
     CLK_init();
@@ -364,10 +375,15 @@ int main(void) {
 
     debug_code_disable();
 
+    watchdog_init();
+
     while (1) {
+        watchdog_feed();
+        BREADCRUMB(BC_MAIN_LOOP);
         main_subtasks(); // Note these tasks will also be run while waiting for USB keyboard polling intervals
 
         if (g_usb_state == USB_FSMSTATUS_FSMSTATE_SUSPEND_Val || g_usb_state == USB_FSMSTATUS_FSMSTATE_SLEEP_Val) {
+            BREADCRUMB(BC_SUSPENDED);
             if (suspend_wakeup_condition()) {
                 udc_remotewakeup(); // Send remote wakeup signal
                 wait_ms(50);
@@ -376,6 +392,7 @@ int main(void) {
             continue;
         }
 
+        BREADCRUMB(BC_KEYBOARD_TASK);
         keyboard_task();
 
 #ifdef CONSOLE_ENABLE
@@ -392,6 +409,7 @@ int main(void) {
 #endif // DEFERRED_EXEC_ENABLE
 
         // Run housekeeping
+        BREADCRUMB(BC_HOUSEKEEPING);
         housekeeping_task();
     }
 

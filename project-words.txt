@@ -22,6 +22,7 @@ crkbd
 DFLL
 donjayamanne
 dztech
+eabi
 eeconfig
 elitec
 eram
@@ -51,8 +52,12 @@ OLED
 oneline
 oneshot
 ortholinear
+PERIPH
 PROGMEM
+qtlib
 QWRTY
+replug
+replugged
 RGBLIGHT
 ristretto
 rshift
@@ -77,3 +82,4 @@ userspace
 Wako
 wheredoesyourmindgo
 xaver
+xpsr

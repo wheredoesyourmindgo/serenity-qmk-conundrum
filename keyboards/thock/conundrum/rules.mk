@@ -21,3 +21,9 @@ FIRMWARE_FORMAT = uf2
 NO_USB2422 = yes
 NO_SR_EXP = yes
 OPT_DEFS += -DARM_ATSAM_DFLL_ONLY -DARM_ATSAM_PTC_ENABLE
+
+# Log the touch sensing state to the console (qmk console), and reset on a freeze with a note of
+# where it was: build with -e EC_TOUCH_DEBUG=yes
+ifeq ($(strip $(EC_TOUCH_DEBUG)), yes)
+    OPT_DEFS += -DEC_TOUCH_DEBUG -DARM_ATSAM_WATCHDOG -DARM_ATSAM_BREADCRUMBS
+endif

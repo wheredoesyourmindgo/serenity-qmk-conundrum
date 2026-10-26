@@ -17,13 +17,15 @@ Thock's own firmware is a QMK fork from 2019. The Conundrum uses an ATSAMD51G18A
 
 Key sensing is not open source. The pads are read through the chip's capacitive touch peripheral (PTC) by `lib/ec_touch/lib/libec_touch_4x12.a`, a prebuilt library with Thock's code and Microchip's QTouch library inside. It comes from thockco/qmk unchanged, with no source or license. `keyboards/thock/conundrum/matrix.c` turns its readings into key presses: pressed above 125, released below 75.
 
+The library also has a bug that froze every Conundrum now and then until it was replugged ([thockco/qmk#7](https://github.com/thockco/qmk/issues/7)): its touch interrupt waits for each measurement to start, and USB could interrupt that wait long enough for it to never end. `matrix.c` puts every other interrupt below the touch interrupt so that can't happen.
+
 ## What's changed from QMK 0.26.11
 
 `git diff 0.26.11` shows everything. In short:
 
 | Where | What |
 |---|---|
-| `platforms/arm_atsam`, `tmk_core/protocol/arm_atsam` | Thock's 2020 chip changes, behind options so the CTRL and ALT still build: the SAMD51G18A, no crystal (`ARM_ATSAM_DFLL_ONLY`), the 1ms timer on TC2, a PTC clock (`ARM_ATSAM_PTC_ENABLE`), the `uf2boot` bootloader, `ARM_ATSAM_FLOAT_ABI` (the library is soft-float), and `NO_USB2422` / `NO_SR_EXP` to leave out Massdrop's USB hub and shift register |
+| `platforms/arm_atsam`, `tmk_core/protocol/arm_atsam` | Thock's 2020 chip changes, behind options so the CTRL and ALT still build: the SAMD51G18A, no crystal (`ARM_ATSAM_DFLL_ONLY`), the 1ms timer on TC2, a PTC clock (`ARM_ATSAM_PTC_ENABLE`), the `uf2boot` bootloader, `ARM_ATSAM_FLOAT_ABI` (the library is soft-float), and `NO_USB2422` / `NO_SR_EXP` to leave out Massdrop's USB hub and shift register. Also opt-in freeze diagnostics (`watchdog.c`, see [Diagnosing freezes](#diagnosing-freezes)) |
 | `lib/arm_atsam/.../samd51g18a.h`, `lib/ec_touch` | The SAMD51G18A headers and Thock's library |
 | `keyboards/thock/conundrum` | The keyboard and both keymaps |
 | `users/serenity`, `modules/` | Serenity, copied from serenity-qmk, and its community modules as submodules |
@@ -83,6 +85,25 @@ serenity-qmk targets QMK 0.28 and later. Everything that bridges the gap lives i
 | `rules.mk` | Builds the modules as plain sources and turns LTO off (QMK warns it often fails on `arm_atsam`, and there's room) |
 
 Left out for now: Chordal Hold (QMK 0.28), which `users/serenity/tapping.c` uses for the arrow cluster. On 0.26 its `get_chordal_hold()` is never called, so a fast roll across the arrows may occasionally fire a modifier.
+
+## Diagnosing freezes
+
+A diagnostic build logs the touch sensing to the console and recovers from freezes on its own:
+
+```sh
+scripts/build.sh serenity -e EC_TOUCH_DEBUG=yes
+qmk console -t | tee -a ~/conundrum-console.log   # leave running while you use the keyboard
+```
+
+It adds (all off in normal builds):
+
+- **Status lines** every 2 seconds: `ec ok` with the measurement rate, the library's error code and state, the strongest key and the range of key baselines. `ec STALL`/`ec ERROR` (followed by every key's readings) if measuring stops or the library reports an error.
+- **A watchdog**: if the main loop stops for 250ms, the chip resets itself, like a quick replug.
+- **Breadcrumbs** in backup RAM, which survives that reset. After each status line, `ec boot` gives the reset cause (`01` power on, `20` watchdog, `40` software reset or freeze) and `last=`, where the previous run was (`enum breadcrumb` in `tmk_core/protocol/arm_atsam/watchdog.h`). `ec freeze` gives the instruction it was stuck on, whether it was inside an interrupt, and which interrupts were pending and running; a crash records itself the same way.
+
+To turn a freeze address into a function and line, keep the build's `.build/thock_conundrum_serenity.elf` and run `arm-none-eabi-addr2line -f -e <elf> <pc>` (the toolchain is in `~/Library/Application Support/qmk/bin`).
+
+The console only empties while the host reads it, so a sleeping Mac makes this build wait on it and reset every 15 seconds or so. That's the logging, not the keyboard.
 
 ## Editor setup (VS Code + clangd)
 

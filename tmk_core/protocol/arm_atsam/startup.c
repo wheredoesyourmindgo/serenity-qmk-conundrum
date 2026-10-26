@@ -557,7 +557,19 @@ void Reset_Handler(void) {
 /**
  * \brief Default interrupt handler for unused IRQs.
  */
+#ifdef ARM_ATSAM_BREADCRUMBS
+// Record the fault or unhandled interrupt and where it happened, then reset (watchdog.c)
+__attribute__((naked)) void Dummy_Handler(void) {
+    __asm volatile(
+        "tst lr, #4\n"
+        "ite eq\n"
+        "mrseq r0, msp\n"
+        "mrsne r0, psp\n"
+        "b breadcrumbs_fault\n");
+}
+#else
 void Dummy_Handler(void) {
     while (1) {
     }
 }
+#endif
