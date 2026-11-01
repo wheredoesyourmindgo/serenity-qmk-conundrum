@@ -85,6 +85,7 @@ tags
 *.jpg
 *.jpeg
 *.png
+!keyboards/thock/conundrum/reset_pins.png
 *.apng
 *.mng
 *.svg

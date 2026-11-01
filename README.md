@@ -56,6 +56,14 @@ The firmware lands in the repo root. To flash, put the keyboard in its bootloade
 
 `scripts/build.sh` runs `qmk` through `scripts/qmk_here.sh`, which gives it a throwaway config pointing at this repo. Plain `qmk compile` would use the global config, where `overlay_dir` points at serenity-qmk, and its `users/serenity` would win over the copy here.
 
+### When no key works
+
+If a firmware can't read the keys, the reset key can't be reached either, and the Conundrum has no reset button. The chip's reset line is on `J1`, the group of five holes next to the USB connector, reachable with the bottom plate off. Reset is the two holes in the three-hole row nearest the board's edge, circled in Mewa's drawing below. It shows the other side of the board, so seen from the bottom (USB connector at the top right) they're the top-right pair. With the keyboard plugged in, bridge those two holes twice quickly, like a double-click, and the bootloader drive appears.
+
+![J1, with the two reset holes circled](keyboards/thock/conundrum/reset_pins.png)
+
+Bridging through a resistor (100 Ω to 1 kΩ) instead of bare metal works the same, and makes touching the wrong pair harmless.
+
 ## Syncing with serenity-qmk
 
 serenity-qmk is where Serenity is developed. Its changes come over with a script, and `SERENITY_QMK_COMMIT` records which serenity-qmk commit this repo was last synced from:
