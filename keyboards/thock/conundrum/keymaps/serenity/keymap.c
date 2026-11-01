@@ -30,7 +30,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [ACTN] = LAYOUT_ortho_4x12(
         KC_TAB,  KC_PSCR, KC_SCRL, KC_PAUS, KC_INS,     KC_APP,         WNDW_MAX_LP,     OS_PRV_TAB,   OS_PRV_APP_WNDW, OS_NXT_APP_WNDW, OS_NXT_TAB,   KC_BSPC,
         KC_ESC,  SOSM_LC, SOSM_LA, SOSM_LG, SOSM_LS,    QK_LLCK,        WNDW_CNTR_LP,    WNDW_LFT_LP,  WNDW_SMLLR,      WNDW_LRGR,       WNDW_RGHT_LP, KC_SCLN,
-        KC_LSFT, KC_NO,   KC_NO,   KC_NO,   KC_NO,      KC_NO,          WNDW_VRT_MAX_LP, WNDW_PRV_SPC, KC_NO,           KC_NO,           WNDW_NXT_SPC, KC_ENT,
+        KC_LSFT, KC_NO,   KC_NO,   KC_NO,   KC_NO,      KC_NO,          WNDW_VRT_MAX_LP, WNDW_PRV_SPC_LP, WNDW_TGL_STSH_LP, WNDW_CYCL_STSH_LP, WNDW_NXT_SPC_LP, KC_ENT,
         KC_LCTL, KC_LALT, KC_LGUI, KC_NO,   MO(NUMNAV), KC_SPC,         KC_SPC,          MO(SYMBL),    MO(HRDWR),       SOSM_RG,         SOSM_RA,      SOSM_RC
     ),
     [HRDWR] = LAYOUT_ortho_4x12(

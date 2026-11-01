@@ -35,6 +35,14 @@ bool process_long_press_keys(uint16_t keycode, keyrecord_t *record) {
             return tap_or_hold(record, WNDW_RGHT_HLF, WNDW_RGHT_FILL);
         case WNDW_VRT_MAX_LP:
             return tap_or_hold(record, WNDW_ALMST_MAX, WNDW_VRT_MAX);
+        case WNDW_PRV_SPC_LP: // Hold does nothing with a single display
+            return tap_or_hold(record, WNDW_PRV_SPC, WNDW_PRV_DSPL);
+        case WNDW_NXT_SPC_LP:
+            return tap_or_hold(record, WNDW_NXT_SPC, WNDW_NXT_DSPL);
+        case WNDW_TGL_STSH_LP:
+            return tap_or_hold(record, WNDW_TGL_STSH, WNDW_STSH);
+        case WNDW_CYCL_STSH_LP:
+            return tap_or_hold(record, WNDW_CYCL_STSH, WNDW_UNSTSH);
 
         // Spotlight: tap searches, hold searches in a new Finder window
         case OS_SPTLGHT_LP:

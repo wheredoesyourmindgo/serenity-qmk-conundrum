@@ -67,7 +67,7 @@
 #define OS_DRKMD_TGL HYPR(KC_D)     // Toggle Dark Mode via AppleScript
 #define OS_MIC_MUTE HYPR(KC_I)      // Toggle Mic Mute via Shortcuts (I for input)
 #define OS_DND HYPR(KC_F)           // Toggle Do Not Disturb (Focus)
-#define OS_STG_MNGR HYPR(KC_T)      // Toggle Stage Manager via Shortcuts
+#define OS_STG_MNGR HYPR(KC_T)      // Toggle Stage Manager (Mission Control shortcut)
 #define OS_SHOW_ALL HYPR(KC_A)      // Show All (App Shortcuts menu title "Show All")
 
 // Window Management (Rectangle)
@@ -85,6 +85,12 @@
 #define WNDW_LRGR LCA(KC_EQL)                    // Larger
 #define WNDW_PRV_SPC HYPR(KC_LEFT)               // Previous Space
 #define WNDW_NXT_SPC HYPR(KC_RIGHT)              // Next Space
+#define WNDW_PRV_DSPL HYPR(KC_LBRC)              // Previous Display (not Hyper , or ., which run sysdiagnose)
+#define WNDW_NXT_DSPL HYPR(KC_RBRC)              // Next Display
+#define WNDW_STSH HYPR(KC_H)                     // Stash (H for hide)
+#define WNDW_UNSTSH HYPR(KC_U)                   // Unstash
+#define WNDW_CYCL_STSH HYPR(KC_R)                // Cycle Stashed (R for rotate; Hyper C converts text to Chinese)
+#define WNDW_TGL_STSH HYPR(KC_G)                 // Toggle Stashed
 
 // Tap / long-press keys, handled in long_press.c. Tap and long press each send a shortcut, so the
 // key inside LT(0, ...) is only a placeholder that keeps each keycode distinct.
@@ -97,6 +103,10 @@
 #define WNDW_CNTR_LP LT(0, KC_E)
 #define WNDW_LFT_LP LT(0, KC_F)
 #define WNDW_RGHT_LP LT(0, KC_G)
+#define WNDW_PRV_SPC_LP LT(0, KC_N)
+#define WNDW_NXT_SPC_LP LT(0, KC_O)
+#define WNDW_TGL_STSH_LP LT(0, KC_P)
+#define WNDW_CYCL_STSH_LP LT(0, KC_Q)
 #define OS_SPTLGHT_LP LT(0, KC_K)
 
 // Hold-only keys, also handled in long_press.c: a tap does nothing, so they can't fire by accident
