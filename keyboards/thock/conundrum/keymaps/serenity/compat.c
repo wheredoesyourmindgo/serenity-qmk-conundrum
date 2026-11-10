@@ -32,9 +32,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 }
 
 void housekeeping_task_kb(void) {
-#if STACKABLE_ONESHOT_TIMEOUT > 0
     housekeeping_task_stackable_oneshot();
-#endif
     housekeeping_task_select_word();
     housekeeping_task_layer_lock();
     housekeeping_task_user();
